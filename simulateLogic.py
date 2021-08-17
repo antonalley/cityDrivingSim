@@ -6,14 +6,39 @@ from CONSTANTS import *
 
 
 class CityMap:
-    def __init__(self):
+    def __init__(self, layout: "default or custom?" = "default"):
         self.cars = []
         self.roads = []
         self.intersections = []
 
+        if layout == "default":  # Will show chicago style roads
+            self.roads.append(Road((0, HEIGHT - LANEWIDTH * 5), (WIDTH, HEIGHT - LANEWIDTH * 5), 8, E))  # Bottom Big Road 8 lanes
+            self.roads.append(Road((LANEWIDTH * 4, 0), (LANEWIDTH * 4, HEIGHT), 6, S))  # Left big 6 lane road
+            self.roads.append(Road((WIDTH - LANEWIDTH * 5, 0), (WIDTH - LANEWIDTH * 5, HEIGHT), 8, S))  # Right big road 8 lanes
+
+            for r in self.roads:
+                for r2 in self.roads:
+                    try:
+                        self.intersections.append(Intersection(r, r2))
+                    except ValueError:  # the roads don't intersect
+                        pass
+
+
     def check_pixel(self, x, y):
         """Finds at Position(x,y) what is there on the map"""
         return 0  # Value 0-6 sensorValue
+
+    def display(self, surface):
+        for road in self.roads:
+            road.display(surface)
+        for i in self.intersections:
+            i.display(surface)
+        for car in self.cars:
+            car.display(surface)
+
+        return 0
+
+
 
 
 class Road:
@@ -23,6 +48,7 @@ class Road:
         self.width = num_lanes * LANEWIDTH
         self.end = end
         self.lines = []  # {type:, start:, end:}
+        self.direction = direction
         if direction == N or direction == S:
             self.lines.append({"type": "SOLID", "start": (self.start[0] - self.width//2, self.start[1]),
                                "end": (self.end[0] - self.width//2, self.end[1])})  # Outer left
@@ -49,6 +75,12 @@ class Road:
                     self.lines.append({"type": "DOTTED", "start": (self.start[0], self.start[1] + (i * LANEWIDTH)), "end": (self.end[0], self.end[1] + (i * LANEWIDTH))})
         # Extra lanes:
         self.width += 6  # Gives a shoulder to the Roads
+
+    def find_crossing(self, other_road):
+        """Returns middle point at which 2 roads meet"""
+        if abs(self.direction[0]) == abs(other_road.direction[0]):
+            raise ValueError("These two roads do not intersect!!", self, other_road)
+        return max(self.start[0], other_road.start[0]), max(self.start[1], other_road.start[1])
 
     def display(self, surface):
         """surface is a pygame.Surface object to blit the road onto"""
@@ -90,15 +122,31 @@ class Road:
 
 
 class Intersection:
-    def __init__(self):
-        self.topLeft = (0, 0)
-        self.width = 0
-        self.height = 0
+    def __init__(self, road1: Road, road2: Road, signal_type: "lights or stops or none" = "none"):
+        """road1 and road2 are Road object, point_of_crossing is the topleft point the 2 roads meet
+        road 1 will be the one that enters and exits on the north and south, road2 on the east and west
+        """
+        self.center = road1.find_crossing(road2)
+        self.width = road1.width
+        self.height = road2.width
+        self.topLeft = (self.center[0] - self.width // 2, self.center[1] - self.height // 2)
+        self.signalType = signal_type
 
     def display(self, surface):
         """surface is a pygame.Surface object to blit the Intersection onto"""
         pygame.draw.rect(surface, BLACK, pygame.Rect(self.topLeft, (self.width, self.height)))
         # draw traffic signals, stop signs
+        if self.signalType == "lights":
+            pass # Draw lights, and figure out their color
+        elif self.signalType == "stops":
+            pygame.draw.rect(surface, RED, pygame.Rect((self.topLeft[0] - LANEWIDTH, self.topLeft[1] - LANEWIDTH),
+                                                       (LANEWIDTH, LANEWIDTH)))
+            pygame.draw.rect(surface, RED, pygame.Rect((self.topLeft[0] + self.width, self.topLeft[1] + self.height),
+                                                       (LANEWIDTH, LANEWIDTH)))
+            pygame.draw.rect(surface, RED, pygame.Rect((self.topLeft[0] + self.width, self.topLeft[1] - LANEWIDTH),
+                                                       (LANEWIDTH, LANEWIDTH)))
+            pygame.draw.rect(surface, RED, pygame.Rect((self.topLeft[0] - LANEWIDTH, self.topLeft[1] + self.height),
+                                                       (LANEWIDTH, LANEWIDTH)))
         return surface
 
 
@@ -130,13 +178,14 @@ class Car:
         pygame.draw.rect(surface, self.color, pygame.Rect(self.topLeft, (self.width, self.height)))
         return surface
 
-
+'''
 # JUST FOR TESTING:
 xs = []
 
-for i in range(5):
-    xs.append(Road((i*150 +50, 0), (i*150 +50, 500), 6, S))
-    xs.append(Road((0,i*100 +50), (500, i*100 +50), 4, E))
+for i in range(10):
+    xs.append(Road((i*150 + 50, 0), (i*150 + 50, 800), 2, S))
+    xs.append(Road((0,i*100 + 50), (1200, i*100 + 50), 4, E))
+    xs.append(Intersection(xs[-2], xs[-1]))
 
 myCar = Car()
 myCar.topLeft = (50-LANEWIDTH + round(0.125*LANEWIDTH), 10)
@@ -162,3 +211,4 @@ while True:
             pygame.quit()
             sys.exit()
     pygame.display.flip()
+'''
