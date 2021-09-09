@@ -15,14 +15,36 @@ class CityMap:
             self.roads.append(Road((0, HEIGHT - LANEWIDTH * 5), (WIDTH, HEIGHT - LANEWIDTH * 5), 8, E))  # Bottom Big Road 8 lanes
             self.roads.append(Road((LANEWIDTH * 4, 0), (LANEWIDTH * 4, HEIGHT), 6, S))  # Left big 6 lane road
             self.roads.append(Road((WIDTH - LANEWIDTH * 5, 0), (WIDTH - LANEWIDTH * 5, HEIGHT), 8, S))  # Right big road 8 lanes
+            self.roads.append(Road((0, LANEWIDTH * 3), (WIDTH, LANEWIDTH * 3), 4, E))  # Top Road 4 lanes
+            self.roads.append(Road((WIDTH // 2, LANEWIDTH * 3), (WIDTH // 2, HEIGHT - LANEWIDTH), 4, S))  # Middle 4 lane road
+            for qq in range(3): # Small E-W streets
+                self.roads.append(Road((LANEWIDTH * 3, LANEWIDTH * 10 + qq * WIDTH // 10),
+                                       (WIDTH - LANEWIDTH, LANEWIDTH * 10 + qq * WIDTH // 10), 2, E))
 
-            for r in self.roads:
-                for r2 in self.roads:
+            self.roads.append(Road((WIDTH // 4, LANEWIDTH * 10),
+                                   (WIDTH // 4, LANEWIDTH * 11 + 2 * WIDTH // 10), 2, S))
+
+            for e, r in enumerate(self.roads):  # This does
+                for r2 in self.roads[e:]:
+                    signal_type = "stops" if r.num_lanes + r2.num_lanes <= 6 else "lights"
                     try:
-                        self.intersections.append(Intersection(r, r2))
+                        if r.direction == N or r.direction == S:
+                            I = Intersection(r, r2, signal_type)
+                        else:
+                            I = Intersection(r2, r, signal_type)
                     except ValueError:  # the roads don't intersect
                         pass
+                    else:
+                        self.intersections.append(I)
 
+            self.initialize_cars()
+
+    def initialize_cars(self):
+        for road in self.roads:
+            if road.direction == N or road.direction == S:
+                self.cars.append(Car((road.start[0] - LANEWIDTH // 2, road.start[1])))
+            else:
+                self.cars.append(Car((road.start[0], road.start[1] - LANEWIDTH // 2)))
 
     def check_pixel(self, x, y):
         """Finds at Position(x,y) what is there on the map"""
@@ -44,11 +66,13 @@ class CityMap:
 class Road:
     def __init__(self, start, end, num_lanes, direction):
         """the start and end are tuples that are in the center of the road"""
+        self.num_lanes = num_lanes
         self.start = start
         self.width = num_lanes * LANEWIDTH
         self.end = end
         self.lines = []  # {type:, start:, end:}
         self.direction = direction
+        #self.road_rect = pygame.Rect(0,0,0,0)
         if direction == N or direction == S:
             self.lines.append({"type": "SOLID", "start": (self.start[0] - self.width//2, self.start[1]),
                                "end": (self.end[0] - self.width//2, self.end[1])})  # Outer left
@@ -76,15 +100,21 @@ class Road:
         # Extra lanes:
         self.width += 6  # Gives a shoulder to the Roads
 
+    @staticmethod
+    def ccw(A, B, C):  # Used from https://stackoverflow.com/a/9997374/6876267
+        return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0])
+
     def find_crossing(self, other_road):
-        """Returns middle point at which 2 roads meet"""
-        if abs(self.direction[0]) == abs(other_road.direction[0]):
+        A, B = self.start, self.end
+        C, D = other_road.start, other_road.end
+        isCrossing = Road.ccw(A, C, D) != Road.ccw(B, C, D) and Road.ccw(A, B, C) != Road.ccw(A, B, D)
+        if not isCrossing:
             raise ValueError("These two roads do not intersect!!", self, other_road)
         return max(self.start[0], other_road.start[0]), max(self.start[1], other_road.start[1])
 
     def display(self, surface):
         """surface is a pygame.Surface object to blit the road onto"""
-        pygame.draw.line(surface, BLACK, self.start, self.end, self.width)
+        self.road_rect = pygame.draw.line(surface, BLACK, self.start, self.end, self.width)
         # Draw lines on top of road:
         for line in self.lines:
             if line["type"] == "SOLID":
@@ -131,13 +161,36 @@ class Intersection:
         self.height = road2.width
         self.topLeft = (self.center[0] - self.width // 2, self.center[1] - self.height // 2)
         self.signalType = signal_type
+        if self.signalType == "lights":
+            if random.uniform(0, 1) >= 0.5:
+                self.signalState = [GREEN, RED, GREEN, RED]  # In order of cars in lanes moving south, west, north, east
+            else:
+                self.signalState = [RED, GREEN, RED, GREEN]  # In order of cars in lanes moving south, west, north, east
+        if self.center == (300, 120):
+            print("Broken intersection: (width, height):", self.width, self.height)
+            print("topleft: ", self.topLeft)
 
     def display(self, surface):
         """surface is a pygame.Surface object to blit the Intersection onto"""
         pygame.draw.rect(surface, BLACK, pygame.Rect(self.topLeft, (self.width, self.height)))
         # draw traffic signals, stop signs
         if self.signalType == "lights":
-            pass # Draw lights, and figure out their color
+            pygame.draw.line(surface, self.signalState[0],
+                             (self.topLeft[0], self.topLeft[1] + self.height),
+                             (self.center[0], self.topLeft[1] + self.height),
+                             LINEWIDTH * 3)  # South bound
+            pygame.draw.line(surface, self.signalState[1],
+                             self.topLeft,
+                             (self.topLeft[0], self.center[1]),
+                             LINEWIDTH * 3)  # West bound
+            pygame.draw.line(surface, self.signalState[2],
+                             (self.center[0], self.topLeft[1]),
+                             (self.topLeft[0] + self.width, self.topLeft[1]),
+                             LINEWIDTH * 3)  # North bound
+            pygame.draw.line(surface, self.signalState[3],
+                             (self.topLeft[0] + self.width, self.center[1]),
+                             (self.topLeft[0] + self.width, self.topLeft[1] + self.height),
+                             LINEWIDTH * 3)  # East bound
         elif self.signalType == "stops":
             pygame.draw.rect(surface, RED, pygame.Rect((self.topLeft[0] - LANEWIDTH, self.topLeft[1] - LANEWIDTH),
                                                        (LANEWIDTH, LANEWIDTH)))
@@ -151,17 +204,20 @@ class Intersection:
 
 
 class Car:
-    def __init__(self):
+    def __init__(self, position: tuple):
         self.nextMove = []
-        self.pos = (0, 0)  # The center of the car
-        self.topLeft = (0, 0)
+        self.velocity = (0, 0)  # x, y change per frame
+        self.angular_velocity = (0, 0)  # x, y change of velocity per frame
+        self.pos = position  # The center of the car
         self.width = round(LANEWIDTH * 0.75)
         self.height = round(LANEWIDTH * 1.25)
+        self.direction = N # TODO implement the direction into the final RECT and figure out how to get it on an angle
+        self.topLeft = (self.pos[0] - self.width //2, self.pos[1] - self.height // 2)
         self.color = BLUE
 
     def next_move(self):
         """Takes the current state of game and determines what the next move will be, without making any changes yet"""
-        result = 0  # Temporary- do the calculations here
+        result = 0  # TODO Temporary- do the calculations here
         self.nextMove = result
         return 0;
 
