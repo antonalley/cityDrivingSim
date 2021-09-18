@@ -1,0 +1,29 @@
+WIDTH, HEIGHT = 1200, 800
+
+# Colors:
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+GRAY = (128, 128, 128)
+WHITE = (255, 255, 255)
+BLUE = (10, 10, 200)
+
+# Directions:
+N = (0, -1)
+S = (0, 1)
+W = (-1, 0)
+E = (1, 0)
+
+# Roads:
+LANEWIDTH = 12
+LINEWIDTH = 1
+DOTTEDLINELENGTH = 5
+
+#SensorValues:
+EMPTYROAD = 0
+CAR = 1
+SOLIDLINE = 2
+DOTTEDLINE = 3
+GREENLIGHT = 4
+YELLOWLIGHT = 5
+REDLIGHT = 6
