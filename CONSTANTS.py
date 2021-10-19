@@ -1,5 +1,7 @@
 WIDTH, HEIGHT = 1200, 800
 
+FPS = 31
+
 # Colors:
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -9,13 +11,13 @@ WHITE = (255, 255, 255)
 BLUE = (10, 10, 200)
 
 # Directions:
-N = (0, -1)
-S = (0, 1)
-W = (-1, 0)
-E = (1, 0)
+N = (0, -1)  # Turn right is swap * -1; turn left is swap
+S = (0, 1)  # Turn right is swap * -1; turn left is swap
+W = (-1, 0)  # Turn right is swap, turn left is swap * -1
+E = (1, 0)  # Turn right is swap, turn left is swap * -1
 
 # Roads:
-LANEWIDTH = 12
+LANEWIDTH = 15
 LINEWIDTH = 1
 DOTTEDLINELENGTH = 5
 

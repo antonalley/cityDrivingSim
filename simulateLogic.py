@@ -1,7 +1,8 @@
 # simulateLogic.py
 import random
-
+import numpy
 import pygame
+from car import Car
 from CONSTANTS import *
 
 
@@ -10,14 +11,18 @@ class CityMap:
         self.cars = []
         self.roads = []
         self.intersections = []
+        self.qRES = 0
 
         if layout == "default":  # Will show chicago style roads
-            self.roads.append(Road((0, HEIGHT - LANEWIDTH * 5), (WIDTH, HEIGHT - LANEWIDTH * 5), 8, E))  # Bottom Big Road 8 lanes
+            self.roads.append(
+                Road((0, HEIGHT - LANEWIDTH * 5), (WIDTH, HEIGHT - LANEWIDTH * 5), 8, E))  # Bottom Big Road 8 lanes
             self.roads.append(Road((LANEWIDTH * 4, 0), (LANEWIDTH * 4, HEIGHT), 6, S))  # Left big 6 lane road
-            self.roads.append(Road((WIDTH - LANEWIDTH * 5, 0), (WIDTH - LANEWIDTH * 5, HEIGHT), 8, S))  # Right big road 8 lanes
+            self.roads.append(
+                Road((WIDTH - LANEWIDTH * 5, 0), (WIDTH - LANEWIDTH * 5, HEIGHT), 8, S))  # Right big road 8 lanes
             self.roads.append(Road((0, LANEWIDTH * 3), (WIDTH, LANEWIDTH * 3), 4, E))  # Top Road 4 lanes
-            self.roads.append(Road((WIDTH // 2, LANEWIDTH * 3), (WIDTH // 2, HEIGHT - LANEWIDTH), 4, S))  # Middle 4 lane road
-            for qq in range(3): # Small E-W streets
+            self.roads.append(
+                Road((WIDTH // 2, LANEWIDTH * 3), (WIDTH // 2, HEIGHT - LANEWIDTH), 4, S))  # Middle 4 lane road
+            for qq in range(3):  # Small E-W streets
                 self.roads.append(Road((LANEWIDTH * 3, LANEWIDTH * 10 + qq * WIDTH // 10),
                                        (WIDTH - LANEWIDTH, LANEWIDTH * 10 + qq * WIDTH // 10), 2, E))
 
@@ -39,16 +44,30 @@ class CityMap:
 
             self.initialize_cars()
 
+
     def initialize_cars(self):
         for road in self.roads:
             if road.direction == N or road.direction == S:
-                self.cars.append(Car((road.start[0] - LANEWIDTH // 2, road.start[1])))
+                self.cars.append(Car((road.start[0] - LANEWIDTH // 2 + LINEWIDTH * 2, road.start[1]), direction=road.direction))
             else:
-                self.cars.append(Car((road.start[0], road.start[1] - LANEWIDTH // 2)))
+                self.cars.append(Car((road.start[0], road.start[1] - LANEWIDTH // 2 + LINEWIDTH * 2), direction=road.direction))
+            # return
 
     def check_pixel(self, x, y):
         """Finds at Position(x,y) what is there on the map"""
         return 0  # Value 0-6 sensorValue
+
+    def update_frame(self, qFrameNum):
+        for car in self.cars:
+            car.next_move(result=[self.qRES,self.qRES,self.qRES])
+        for car in self.cars:
+            car.update()
+
+        if self.qRES == 1:
+            self.qRES = 0
+        if qFrameNum == 60:
+            self.qRES = 1
+#git won't work
 
     def display(self, surface):
         for road in self.roads:
@@ -61,8 +80,6 @@ class CityMap:
         return 0
 
 
-
-
 class Road:
     def __init__(self, start, end, num_lanes, direction):
         """the start and end are tuples that are in the center of the road"""
@@ -72,19 +89,22 @@ class Road:
         self.end = end
         self.lines = []  # {type:, start:, end:}
         self.direction = direction
-        #self.road_rect = pygame.Rect(0,0,0,0)
+        # self.road_rect = pygame.Rect(0,0,0,0)
         if direction == N or direction == S:
-            self.lines.append({"type": "SOLID", "start": (self.start[0] - self.width//2, self.start[1]),
-                               "end": (self.end[0] - self.width//2, self.end[1])})  # Outer left
-            self.lines.append({"type": "SOLID", "start": (self.start[0] + self.width//2, self.start[1]),
-                               "end": (self.end[0] + self.width//2, self.end[1])})  # Outer Right
+            self.lines.append({"type": "SOLID", "start": (self.start[0] - self.width // 2, self.start[1]),
+                               "end": (self.end[0] - self.width // 2, self.end[1])})  # Outer left
+            self.lines.append({"type": "SOLID", "start": (self.start[0] + self.width // 2, self.start[1]),
+                               "end": (self.end[0] + self.width // 2, self.end[1])})  # Outer Right
             self.lines.append({"type": "SOLID", "start": self.start,
                                "end": self.end})  # Center
 
             if num_lanes > 2:
-                for i in range(1, (num_lanes-2) // 2 + 1):  # there is an i value for each lane to add on both sides. Can only have even number
-                    self.lines.append({"type": "DOTTED", "start": (self.start[0] - (i * LANEWIDTH), self.start[1]), "end": (self.end[0] - (i * LANEWIDTH), self.end[1])})
-                    self.lines.append({"type": "DOTTED", "start": (self.start[0] + (i * LANEWIDTH), self.start[1]), "end": (self.end[0] + (i * LANEWIDTH), self.end[1])})
+                for i in range(1, (
+                                          num_lanes - 2) // 2 + 1):  # there is an i value for each lane to add on both sides. Can only have even number
+                    self.lines.append({"type": "DOTTED", "start": (self.start[0] - (i * LANEWIDTH), self.start[1]),
+                                       "end": (self.end[0] - (i * LANEWIDTH), self.end[1])})
+                    self.lines.append({"type": "DOTTED", "start": (self.start[0] + (i * LANEWIDTH), self.start[1]),
+                                       "end": (self.end[0] + (i * LANEWIDTH), self.end[1])})
 
         else:  # If e or w
             self.lines.append({"type": "SOLID", "start": (self.start[0], self.start[1] - self.width // 2),
@@ -94,9 +114,12 @@ class Road:
             self.lines.append({"type": "SOLID", "start": self.start,
                                "end": self.end})  # Center
             if num_lanes > 2:
-                for i in range(1, (num_lanes-2) // 2 + 1):  # there is an i value for each lane to add on both sides. Can only have even number
-                    self.lines.append({"type": "DOTTED", "start": (self.start[0], self.start[1] - (i * LANEWIDTH)), "end": (self.end[0], self.end[1] - (i * LANEWIDTH))})
-                    self.lines.append({"type": "DOTTED", "start": (self.start[0], self.start[1] + (i * LANEWIDTH)), "end": (self.end[0], self.end[1] + (i * LANEWIDTH))})
+                for i in range(1, (
+                                          num_lanes - 2) // 2 + 1):  # there is an i value for each lane to add on both sides. Can only have even number
+                    self.lines.append({"type": "DOTTED", "start": (self.start[0], self.start[1] - (i * LANEWIDTH)),
+                                       "end": (self.end[0], self.end[1] - (i * LANEWIDTH))})
+                    self.lines.append({"type": "DOTTED", "start": (self.start[0], self.start[1] + (i * LANEWIDTH)),
+                                       "end": (self.end[0], self.end[1] + (i * LANEWIDTH))})
         # Extra lanes:
         self.width += 6  # Gives a shoulder to the Roads
 
@@ -134,7 +157,7 @@ class Road:
                 else:
                     a = abs(x2 - x1)
                     b = abs(y2 - y1)
-                    c = round(math.sqrt(a ** 2 + b ** 2))
+                    c = round(numpy.sqrt(a ** 2 + b ** 2))
                     dx = dl * a / c
                     dy = dl * b / c
 
@@ -170,6 +193,13 @@ class Intersection:
             print("Broken intersection: (width, height):", self.width, self.height)
             print("topleft: ", self.topLeft)
 
+    def swap_signal_state(self):
+        for i, l in enumerate(self.signalState):
+            if l == GREEN:
+                self.signalState[i] = RED
+            else:
+                self.signalState[i] = GREEN
+
     def display(self, surface):
         """surface is a pygame.Surface object to blit the Intersection onto"""
         pygame.draw.rect(surface, BLACK, pygame.Rect(self.topLeft, (self.width, self.height)))
@@ -203,68 +233,3 @@ class Intersection:
         return surface
 
 
-class Car:
-    def __init__(self, position: tuple):
-        self.nextMove = []
-        self.velocity = (0, 0)  # x, y change per frame
-        self.angular_velocity = (0, 0)  # x, y change of velocity per frame
-        self.pos = position  # The center of the car
-        self.width = round(LANEWIDTH * 0.75)
-        self.height = round(LANEWIDTH * 1.25)
-        self.direction = N # TODO implement the direction into the final RECT and figure out how to get it on an angle
-        self.topLeft = (self.pos[0] - self.width //2, self.pos[1] - self.height // 2)
-        self.color = BLUE
-
-    def next_move(self):
-        """Takes the current state of game and determines what the next move will be, without making any changes yet"""
-        result = 0  # TODO Temporary- do the calculations here
-        self.nextMove = result
-        return 0;
-
-    def update(self):
-        """puts the next move into action"""
-        return None
-
-    def generate_sensors(self):
-        """returns list of every sensor with every x,y coordinate in it"""
-        return []
-
-    def display(self, surface):
-        """surface is a pygame.Surface object to blit the car onto"""
-        pygame.draw.rect(surface, self.color, pygame.Rect(self.topLeft, (self.width, self.height)))
-        return surface
-
-'''
-# JUST FOR TESTING:
-xs = []
-
-for i in range(10):
-    xs.append(Road((i*150 + 50, 0), (i*150 + 50, 800), 2, S))
-    xs.append(Road((0,i*100 + 50), (1200, i*100 + 50), 4, E))
-    xs.append(Intersection(xs[-2], xs[-1]))
-
-myCar = Car()
-myCar.topLeft = (50-LANEWIDTH + round(0.125*LANEWIDTH), 10)
-xs.append(myCar)
-
-hi = pygame.Surface((1200, 800))
-hi.fill(GRAY)
-
-DISPLAY = pygame.display.set_mode((1200, 800), 0, 32)
-pygame.init()
-
-import sys
-from pygame.locals import QUIT
-import random
-
-while True:
-    DISPLAY.fill(GRAY)
-    for x in xs:
-        x.display(hi)
-    DISPLAY.blit(hi, (0, 0))
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            pygame.quit()
-            sys.exit()
-    pygame.display.flip()
-'''

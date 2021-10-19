@@ -1,29 +1,43 @@
-# This is a sample Python script.
+import time
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+import pygame
+
 from simulateLogic import *
 import sys
 from pygame.locals import QUIT
 
-#Test git
+#GITHUB HAS PROBLEMS I AM EDITING THIS FILE
+# TODO:: Get rid of variables that start with 'q' - these were meant to be temporary
+
 def main():
     thismap = CityMap()
     DISPLAY = pygame.display.set_mode((1200, 800), 0, 32)
     pygame.init()
-
+    pause = False
+    gameClock = pygame.time.Clock()
+    qFrameNum = 0
     while True:
-        temp_surf = pygame.Surface((WIDTH, HEIGHT))
-        temp_surf.fill(GRAY)
-        thismap.display(temp_surf)
-        DISPLAY.blit(temp_surf, (0, 0))
-        pygame.display.set_caption(str(pygame.mouse.get_pos()))
+        if not pause:
+            thismap.update_frame(qFrameNum)
+            DISPLAY.fill(GRAY)
+            thismap.display(DISPLAY)
+            pygame.display.set_caption(str(pygame.mouse.get_pos()))
+            pygame.display.flip()
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
-        pygame.display.flip()
-        del temp_surf
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    pause = True
+            elif event.type == pygame.KEYUP:
+                if event.key == pygame.K_SPACE:
+                    pause = False
+
+        qFrameNum += 1
+        gameClock.tick(FPS)
+
 
 
 # Press the green button in the gutter to run the script.
