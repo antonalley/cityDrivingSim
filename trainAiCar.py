@@ -3,6 +3,11 @@
 
 from simulateLogic import *
 
+def main():
+    thismap = CityMap()
+    while True:
+        thismap.update_frame()
+
 
 
 

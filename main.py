@@ -6,6 +6,7 @@ from simulateLogic import *
 import sys
 from pygame.locals import QUIT
 
+#GITHUB HAS PROBLEMS I AM EDITING THIS FILE
 # TODO:: Get rid of variables that start with 'q' - these were meant to be temporary
 
 def main():
@@ -17,7 +18,7 @@ def main():
     qFrameNum = 0
     while True:
         if not pause:
-            thismap.update_frame(qFrameNum)
+            thismap.update_frame() # TESTING qFrameNum)
             DISPLAY.fill(GRAY)
             thismap.display(DISPLAY)
             pygame.display.set_caption(str(pygame.mouse.get_pos()))

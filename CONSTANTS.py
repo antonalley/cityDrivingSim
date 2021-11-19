@@ -1,6 +1,6 @@
 WIDTH, HEIGHT = 1200, 800
 
-FPS = 31
+FPS = 30
 
 # Colors:
 BLACK = (0, 0, 0)
@@ -20,6 +20,9 @@ E = (1, 0)  # Turn right is swap, turn left is swap * -1
 LANEWIDTH = 15
 LINEWIDTH = 1
 DOTTEDLINELENGTH = 5
+
+CARWIDTH = round(LANEWIDTH * 0.75)  # = about 11 px
+CARLENGTH = round(LANEWIDTH * 1.25) # about 19 px
 
 #SensorValues:
 EMPTYROAD = 0
