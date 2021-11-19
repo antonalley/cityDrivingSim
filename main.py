@@ -6,7 +6,6 @@ from simulateLogic import *
 import sys
 from pygame.locals import QUIT
 
-#GITHUB HAS PROBLEMS I AM EDITING THIS FILE
 # TODO:: Get rid of variables that start with 'q' - these were meant to be temporary
 
 def main():

@@ -1,14 +1,16 @@
 from CONSTANTS import *
 import pygame
 from AI_v0_2 import Network as BACKGROUND_AI
+import random
 
-NETWORK_SHAPE = [7, 5, 3] # TODO Train this size untill it's the best it can do, then add a layer at a time.
+NETWORK_SHAPE = [7, 5, 3]  # TODO Train this size untill it's the best it can do, then add a layer at a time.
+
 
 class Car(BACKGROUND_AI):
     def __init__(self, position: tuple, direction=S, file=None):
         BACKGROUND_AI.__init__(self, networkShape=NETWORK_SHAPE, file=file)
-        self.nextMove = {} # {"direction", "pos", "velocity"}
-        self.velocity = direction[0]*3, direction[1]*3 # (0, 1)  # x, y change per frame
+        self.nextMove = {}  # {"direction", "pos", "velocity"}
+        self.velocity = direction[0] * 3, direction[1] * 3  # (0, 1)  # x, y change per frame
         # TODO NOT NEEDED ?? self.angular_velocity = (0, 0)  # x, y change of velocity per frame
         self.pos = position  # The center of the car
         self.width = round(LANEWIDTH * 0.75)
@@ -18,11 +20,10 @@ class Car(BACKGROUND_AI):
         self.align_topLeft()
         self.color = BLUE
 
-    def next_move(self, result = [0, 0, 0]):
+    def next_move(self, result=[0, 0, 0]):
         """Takes the current state of game and determines what the next move will be, without making any changes yet"""
-        #result = [0, 0, 0]  # Turn, LaneChange, Acceleration TODO Temporary- do the calculations here
-        result = self.feedForward([1,0,0,0,0,0,0]) # TODO get input vector from data from Map
-        #print(result)
+        # result = [0, 0, 0]  # Turn, LaneChange, Acceleration TODO Temporary- do the calculations here
+        result = self.feedForward([random.randint(0, 1) for i in range(7)])  # TODO get input vector from data from Map
         if result[0]:  # Turn:
             if self.direction == N or self.direction == S:
                 # Turn right is swap * -1; turn left is swap
@@ -41,7 +42,8 @@ class Car(BACKGROUND_AI):
                 self.pos = self.pos[0], self.pos[1] + (LANEWIDTH * result[1] * self.direction[0])
 
         if result[2]:  # TODO Acceleration
-            self.velocity = (self.velocity[0] + (result[2] * self.direction[0]), self.velocity[1] + (result[2] * self.direction[1]))
+            self.velocity = (self.velocity[0] + (result[2] * self.direction[0]), \
+                             self.velocity[1] + (result[2] * self.direction[1]))
 
         return 0
 
