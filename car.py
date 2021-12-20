@@ -1,5 +1,8 @@
+import numpy as np
+
 from CONSTANTS import *
 import pygame
+import numpy
 from AI_v0_2 import Network as BACKGROUND_AI
 
 NETWORK_SHAPE = [7, 5, 3] # TODO Train this size untill it's the best it can do, then add a layer at a time.
@@ -18,7 +21,8 @@ class Car(BACKGROUND_AI):
         self.color = BLUE
 
         # For the learning Model:
-        self.sensors = []
+        self.RelativeSensors = [[] for i in range(6)]
+        self.initialize_sensors()
 
     def next_move(self): #, result = [0, 0, 0]):
         """Takes the current state of game and determines what the next move will be, without making any changes yet"""
@@ -45,14 +49,15 @@ class Car(BACKGROUND_AI):
         if result[2]:  # Acceleration
             self.velocity = (self.velocity[0] + (result[2] * self.direction[0]), self.velocity[1] + (result[2] * self.direction[1]))
 
-        return 0
+        return self.nextMove["pos"]  # So it can check for collisions on the map
 
-    def update(self):
+    def update(self, isCollision: bool):
         """puts the next move into action"""
-        if self.nextMove:
+        if not isCollision and self.nextMove:
             self.direction = self.nextMove["direction"]
             self.pos = self.nextMove["pos"]
             self.velocity = self.nextMove["velocity"]
+
 
         # Advance by the velocity
         self.pos = (self.pos[0] + self.velocity[0], self.pos[1] + self.velocity[1])
@@ -68,9 +73,29 @@ class Car(BACKGROUND_AI):
         else:
             self.topLeft = (self.pos[0] - self.width // 2, self.pos[1] - self.height // 2)
 
+    def initialize_sensors(self):
+        """returns list of every sensor with every relative to self.pos x,y coordinate in it"""
+        # Forward: len = 38
+        self.RelativeSensors[0] = [(0,y) for y in range(self.height//2, self.height*2 + self.height//2)]
+        # LeftForward: len = 19
+        self.RelativeSensors[1] = [(-y - self.width // 2, y) for y in range(self.height)]
+        # RightForward: len = 19
+        self.RelativeSensors[2] = [(y + self.width // 2, y) for y in range(self.height)]
+        # Left back: len = 19
+        self.RelativeSensors[3] = [(-y - self.width // 2, -y) for y in range(self.height)]
+        # Right back: len = 19
+        self.RelativeSensors[4] = [(y + self.width // 2, -y) for y in range(self.height)]
+        # Backward: len = 19
+        self.RelativeSensors[5] = [(0, -y) for y in range(self.height // 2, self.height + (self.height // 2))]
+
     def generate_sensors(self):
-        """returns list of every sensor with every x,y coordinate in it"""
-        return []
+        ''' Calculates the actual sensor position based on the current position and the relative sensors'''
+        pass
+
+
+    def collision_check(self, otherCar):
+        pass
+
 
     def display(self, surface):
         """surface is a pygame.Surface object to blit the car onto"""
