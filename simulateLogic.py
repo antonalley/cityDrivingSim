@@ -2,6 +2,8 @@
 import random
 import numpy
 import pygame
+
+import manualCar
 from car import Car
 from road import Road
 from intersection import Intersection
@@ -9,7 +11,7 @@ from CONSTANTS import *
 
 
 class CityMap:
-    def __init__(self, layout: "default or custom?" = "default"):
+    def __init__(self, layout: "default or custom?" = "default", driving_mode: "manual or autoPopulate?" = "autoPopulate"):
         self.cars = []
         self.roads = []
         self.intersections = []
@@ -35,7 +37,7 @@ class CityMap:
                 for r2 in self.roads[e:]:
                     signal_type = "stops" if r.num_lanes + r2.num_lanes <= 6 else "lights"
                     try:
-                        if r.direction == N or r.direction == S:
+                        if (r.direction == N).all() or (r.direction == S).all():
                             I = Intersection(r, r2, signal_type)
                         else:
                             I = Intersection(r2, r, signal_type)
@@ -44,26 +46,32 @@ class CityMap:
                     else:
                         self.intersections.append(I)
 
-            self.initialize_cars()
+            self.initialize_cars(driving_mode)
 
 
-    def initialize_cars(self):
-        for road in self.roads:
-            if road.direction == N or road.direction == S:
-                self.cars.append(Car((road.start[0] - LANEWIDTH // 2 + LINEWIDTH * 2, road.start[1]), direction=road.direction))
-            else:
-                self.cars.append(Car((road.start[0], road.start[1] - LANEWIDTH // 2 + LINEWIDTH * 2), direction=road.direction))
-            # return
+    def initialize_cars(self, driving_mode):
+        if driving_mode == "autoPopulate":
+            for road in self.roads:
+                if (road.direction == N).all() or (road.direction == S).all():
+                    self.cars.append(Car((road.start[0] - LANEWIDTH // 2 + LINEWIDTH * 2, road.start[1]), direction=road.direction))
+                else:
+                    self.cars.append(Car((road.start[0], road.start[1] - LANEWIDTH // 2 + LINEWIDTH * 2), direction=road.direction))
+
+        elif driving_mode == "manual":
+            self.cars.append(manualCar.manual((40,40)))
 
     def check_pixel(self, x, y):
         """Finds at Position(x,y) what is there on the map"""
         return 0  # Value 0-6 sensorValue
 
-    def update_frame(self):  # TESTING, qFrameNum):
+    def update_frame(self, keyMap=None):  # TESTING, qFrameNum):
         for car in self.cars:
-            car.next_move()  # TESTING result=[self.qRES, self.qRES, self.qRES])
+            if keyMap == None:
+                car.next_move()  # TESTING result=[self.qRES, self.qRES, self.qRES])
+            else:
+                car.next_move(keyMap)
         for car in self.cars:
-            car.update()
+            car.update(False) # Testing: put in collision check
         for intersect in self.intersections:
             if intersect.signalType == "lights":
                 r = random.randint(0, 100)

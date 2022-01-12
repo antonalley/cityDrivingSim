@@ -1,6 +1,8 @@
+import numpy as np
+
 WIDTH, HEIGHT = 1200, 800
 
-FPS = 30
+FPS =10
 
 # Colors:
 BLACK = (0, 0, 0)
@@ -11,13 +13,13 @@ WHITE = (255, 255, 255)
 BLUE = (10, 10, 200)
 
 # Directions:
-N = (0, -1)  # Turn right is swap * -1; turn left is swap
-S = (0, 1)  # Turn right is swap * -1; turn left is swap
-W = (-1, 0)  # Turn right is swap, turn left is swap * -1
-E = (1, 0)  # Turn right is swap, turn left is swap * -1
+N = np.array([0, -1])  # Turn right is swap * -1; turn left is swap
+S = np.array([0, 1])  # Turn right is swap * -1; turn left is swap
+W = np.array([-1, 0])  # Turn right is swap, turn left is swap * -1
+E = np.array([1, 0])  # Turn right is swap, turn left is swap * -1
 
 # Roads:
-LANEWIDTH = 15
+LANEWIDTH = 16
 LINEWIDTH = 1
 DOTTEDLINELENGTH = 5
 
@@ -32,3 +34,8 @@ DOTTEDLINE = 3
 GREENLIGHT = 4
 YELLOWLIGHT = 5
 REDLIGHT = 6
+
+
+# Rotation Matricies:
+rotLeft = np.array([[0,1],[-1,0]])
+rotRight = np.array([[0, -1],[1, 0]])
