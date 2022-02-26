@@ -10,9 +10,9 @@ class Road:
         self.width = num_lanes * LANEWIDTH
         self.end = end
         self.lines = []  # {type:, start:, end:}
-        self.direction = direction
+        self.direction = np.array(direction)
         # self.road_rect = pygame.Rect(0,0,0,0)
-        if direction == N or direction == S:
+        if (direction == N).all() or (direction == S).all():
             self.lines.append({"type": "SOLID", "start": (self.start[0] - self.width // 2, self.start[1]),
                                "end": (self.end[0] - self.width // 2, self.end[1])})  # Outer left
             self.lines.append({"type": "SOLID", "start": (self.start[0] + self.width // 2, self.start[1]),

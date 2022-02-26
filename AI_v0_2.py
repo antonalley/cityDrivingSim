@@ -85,6 +85,10 @@ class Network:
         self.biases = biases
                          
     def feedForward(self, inputVector):
+        """
+
+        :rtype: object
+        """
         if len(inputVector) != self.networkShape[0]:
             raise NetworkError(f"Wrong size for inputVector: {len(inputVector)}, must be a length of {self.networkShape[0]}")
         for data in inputVector:

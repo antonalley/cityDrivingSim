@@ -1,6 +1,8 @@
 
 
-# Run this file to run the simulation with the most advanced self-driving cars
+# Run this file to drive one car through the streets
+# TODO: and maybe to collect data and to train the car
+
 
 import time
 
@@ -10,10 +12,9 @@ from simulateLogic import *
 import sys
 from pygame.locals import QUIT
 
-# TODO:: Get rid of variables that start with 'q' - these were meant to be temporary
-
 def main():
-    thismap = CityMap()
+    thismap = CityMap(driving_mode="manual")
+    keyMap = {pygame.K_DOWN:False, pygame.K_UP:False, pygame.K_LEFT:False, pygame.K_RIGHT:False}
     DISPLAY = pygame.display.set_mode((1200, 800), 0, 32)
     pygame.init()
     pause = False
@@ -21,7 +22,7 @@ def main():
     qFrameNum = 0
     while True:
         if not pause:
-            thismap.update_frame() # TESTING qFrameNum)
+            thismap.update_frame(keyMap)
             DISPLAY.fill(GRAY)
             thismap.display(DISPLAY)
             pygame.display.set_caption(str(pygame.mouse.get_pos()))
@@ -34,9 +35,13 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     pause = True
+                elif event.key in keyMap:
+                    keyMap[event.key] = True
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE:
                     pause = False
+                elif event.key in keyMap:
+                    keyMap[event.key] = False
 
         qFrameNum += 1
         gameClock.tick(FPS)
@@ -46,5 +51,3 @@ def main():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     main()
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
