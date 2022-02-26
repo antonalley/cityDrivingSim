@@ -3,7 +3,7 @@ from pygame.constants import *
 from CONSTANTS import *
 
 class manual(car.Car):
-    def next_move(self, keys_in=None):
+    def next_move(self, city_map, keys_in=None):
         self.nextMove["pos"] = self.pos
         self.nextMove["velocity"] = self.velocity
         self.nextMove["direction"] = self.direction
@@ -26,6 +26,9 @@ class manual(car.Car):
             #else:
                 #self.nextMove["direction"] = (self.direction[1], self.direction[0])
                 #self.nextMove["velocity"] = (self.velocity[1], self.velocity[0])
+
+
+
 
 
 

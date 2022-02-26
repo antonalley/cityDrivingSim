@@ -4,7 +4,7 @@ from CONSTANTS import *
 import pygame
 from AI_v0_2 import Network as BACKGROUND_AI
 
-NETWORK_SHAPE = [7, 5, 3]  # TODO Train this size until it's the best it can do, then add a layer at a time.
+NETWORK_SHAPE = [42, 14, 7, 3]  # TODO Train this size until it's the best it can do, then add a layer at a time.
 
 
 class Car(BACKGROUND_AI):
@@ -24,13 +24,14 @@ class Car(BACKGROUND_AI):
         self.sensors = []
         self.initialize_sensors()
 
-    def next_move(self, keys_in=None):  # , result = [0, 0, 0]):
+    def next_move(self, city_map, keys_in=None):  # , result = [0, 0, 0]):
         """Takes the current state of game and determines what the next move will be, without making any changes yet"""
         if keys_in is None:
             keys_in = {}
 
         # result = [Turn, LaneChange, Acceleration]
-        result = self.feedForward([1, 0, 0, 0, 0, 0, 0])  # TODO get input vector from data from Map
+        #result = self.feedForward([1, 0, 0, 0, 0, 0, 0])  # TODO get input vector from data from Map
+        result = self.feedForward(self.get_sensor_data(city_map))
         # print(result)
 
         # These are to make sure that there aren't any errors with not having a value
@@ -99,6 +100,19 @@ class Car(BACKGROUND_AI):
         self.sensors.append(Sensor((0, self.height // 2), (0, round(
             self.height * 1.5))))  # [5] = [(0, -y) for y in range(self.height // 2, self.height + (self.height // 2))]
 
+    def get_sensor_data(self, city_map):
+        """
+            Following Input Model plan 4, which is as follows:
+            - Each Sensor has 7 verticies for eash of the possibilities (Green light, Dotted line, Yellow Light, Stop Sign,
+                Solid Line, Red Light, Car) in that order
+            -  It gives the distance to each of those options ( or 0 if not touching )
+            - So a total of 6 sensors x 7 verticies = 42 input size
+        """
+        data = []
+        for sensor in self.sensors:
+            data += sensor.sense(city_map)
+        return data;
+
     def collision_check(self, otherCar):
         pass
 
@@ -113,6 +127,9 @@ class Car(BACKGROUND_AI):
             s.display(surface, self.pos, self.direction)
 
 
+
+
+
 class Sensor:
     def __init__(self, startLine, endLine):
         self.start = startLine
@@ -123,6 +140,39 @@ class Sensor:
             (self.start[0] + carPos[0], self.start[1] + carPos[1]), (self.end[0] + carPos[0], self.end[1] + carPos[1]))
         rotatedPos = (rotateCoordinate(carPos, northPos[0], carDir), rotateCoordinate(carPos, northPos[1], carDir))
         pygame.draw.line(surface, RED, rotatedPos[0], rotatedPos[1])
+
+    def sense(self, city_map):
+        """@:return An array[7] for each possible object to sense (Green light, Dotted line, Yellow Light, Stop Sign,
+                Solid Line, Red Light, Car)
+        """
+        greenLight, yellowLight, redLight, stop = self.get_lights(city_map.intersections)
+        dotted, solid = self.get_lines(city_map.roads)
+        cars = self.get_cars(city_map.cars)
+        return [greenLight, dotted, yellowLight, stop, solid, redLight, cars]
+
+    def get_lights(self, intersections):
+        # TODO
+        greenLight = 0
+        yellowLight = 0
+        stop = 0
+
+        # for inter in self.find_touching_intersections(intersections):
+        #     if(inter.signal_Type == "stops"):
+        #         stop = self.distance()
+
+        return [0,0,0]
+
+    def get_cars(self, cars):
+        # TODO
+        return 0
+
+    def get_lines(self, roads):
+        # TODO
+        return [0,0]
+
+    def find_touching_intersections(self, intersections):
+        # TODO
+        return intersections;
 
 
 def rotateCoordinate(centerOfRotation, coordinate, direction):

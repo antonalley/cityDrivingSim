@@ -67,9 +67,9 @@ class CityMap:
     def update_frame(self, keyMap=None):  # TESTING, qFrameNum):
         for car in self.cars:
             if keyMap == None:
-                car.next_move()  # TESTING result=[self.qRES, self.qRES, self.qRES])
+                car.next_move(self)  # TESTING result=[self.qRES, self.qRES, self.qRES])
             else:
-                car.next_move(keyMap)
+                car.next_move(self, keyMap)
         for car in self.cars:
             car.update(False) # Testing: put in collision check
         for intersect in self.intersections:
