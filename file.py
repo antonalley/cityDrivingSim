@@ -1,3 +1,7 @@
+"""
+Helps with Saving Files
+"""
+
 from pickle import dump, load
 from os import walk, getcwd
 
@@ -14,6 +18,9 @@ class OverwriteError(Exception):
         return repr(self.value)
 
 def save(filename, data, warning=False):
+    """
+    Save some data to the specified .sav file in current directory, or specified path
+    """
     if warning:
         input('Warning: will overwite entire file. Press enter to continue')
 
