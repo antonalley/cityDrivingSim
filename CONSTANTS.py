@@ -5,7 +5,7 @@ import numpy as np
 
 WIDTH, HEIGHT = 1200, 800
 
-FPS =10
+FPS =30
 
 # Colors:
 BLACK = (0, 0, 0)

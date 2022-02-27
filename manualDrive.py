@@ -28,6 +28,10 @@ def main():
             pygame.display.set_caption(str(pygame.mouse.get_pos()))
             pygame.display.flip()
 
+        # Reset the keymap so the car doesn't keep turning
+        for key in keyMap:
+            keyMap[key] = False
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 pygame.quit()
@@ -35,13 +39,11 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     pause = True
-                elif event.key in keyMap:
-                    keyMap[event.key] = True
             elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_SPACE:
                     pause = False
                 elif event.key in keyMap:
-                    keyMap[event.key] = False
+                    keyMap[event.key] = True
 
         qFrameNum += 1
         gameClock.tick(FPS)
