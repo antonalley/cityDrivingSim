@@ -1,3 +1,6 @@
+"""
+Constants used throughout the cityDrivingSim project
+"""
 import numpy as np
 
 WIDTH, HEIGHT = 1200, 800
