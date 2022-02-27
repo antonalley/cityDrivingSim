@@ -1,6 +1,7 @@
 class Box:
     """
     A Base class that can be implemented by intersection, car, possibly road
+    To give it the basic properties of a box that need to be assessed
     """
     def __init__(self, topLeft, width, height):
         self.topLeft = topLeft
@@ -11,7 +12,7 @@ class Box:
         """
         @:param line_start where the line starts
         @:param line_end where the line ends
-        @:return a boolean to say if the line intercepts the box
+        @:return coordinate of where it intercepts, or False if it doesn't intercept
         """
 
     def get_lines(self):
