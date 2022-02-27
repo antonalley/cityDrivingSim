@@ -38,9 +38,9 @@ class CityMap:
                     signal_type = "stops" if r.num_lanes + r2.num_lanes <= 6 else "lights"
                     try:
                         if (r.direction == N).all() or (r.direction == S).all():
-                            I = Intersection(r, r2, signal_type,,
+                            I = Intersection(r, r2, signal_type)
                         else:
-                            I = Intersection(r2, r, signal_type,,
+                            I = Intersection(r2, r, signal_type)
                     except ValueError:  # the roads don't intersect
                         pass
                     else:
@@ -91,6 +91,6 @@ class CityMap:
         for i in self.intersections:
             i.display(surface)
         for car in self.cars:
-            car.display(surface,,
+            car.display(surface)
 
         return 0
