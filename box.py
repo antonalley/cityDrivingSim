@@ -1,4 +1,7 @@
 class Box:
+    """
+    A Base class that can be implemented by intersection, car, possibly road
+    """
     def __init__(self, topLeft, width, height):
         self.topLeft = topLeft
         self.width = width
