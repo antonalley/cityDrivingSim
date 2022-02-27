@@ -5,15 +5,17 @@ import numpy as np
 
 WIDTH, HEIGHT = 1200, 800
 
-FPS =30
+FPS = 10
 
 # Colors:
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+YELLOW = (255, 255, 0)
 GREEN = (0, 255, 0)
 GRAY = (128, 128, 128)
 WHITE = (255, 255, 255)
 BLUE = (10, 10, 200)
+PINK = (255, 192, 203)
 
 # Directions:
 N = np.array([0, -1])  # Turn right is swap * -1; turn left is swap

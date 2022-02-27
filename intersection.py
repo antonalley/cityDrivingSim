@@ -2,32 +2,38 @@ from CONSTANTS import *
 import pygame
 from road import Road
 import random
+from box import Box
 
-class Intersection:
-    def __init__(self, road1: Road, road2: Road, signal_type: "lights or stops or none" = "none"):
+
+class Intersection(Box):
+    def __init__(self, road1: Road, road2: Road, topLeft, width, height,
+                 signal_type: "lights or stops or none" = "none"):
         """road1 and road2 are Road object, point_of_crossing is the topleft point the 2 roads meet
         road 1 will be the one that enters and exits on the north and south, road2 on the east and west
         """
+        super().__init__(topLeft, width, height)
         self.center = road1.find_crossing(road2)
-        self.width = road1.width
-        self.height = road2.width
-        self.topLeft = (self.center[0] - self.width // 2, self.center[1] - self.height // 2)
+        # self.width = road1.width
+        # self.height = road2.width
+        # self.topLeft = (self.center[0] - self.width // 2, self.center[1] - self.height // 2)
         self.signalType = signal_type
         if self.signalType == "lights":
             if random.uniform(0, 1) >= 0.5:
-                self.signalState = [GREEN, RED, GREEN, RED]  # In order of cars in lanes moving south, west, north, east
+                # In order of cars in lanes moving south, west, north, east
+                self.signalState = {S: GREEN, W: RED, N: GREEN, E: RED}
             else:
-                self.signalState = [RED, GREEN, RED, GREEN]  # In order of cars in lanes moving south, west, north, east
+                # In order of cars in lanes moving south, west, north, east
+                self.signalState = {S: RED, W: GREEN, N: RED, E: GREEN}
         if self.center == (300, 120):
             print("Broken intersection: (width, height):", self.width, self.height)
             print("topleft: ", self.topLeft)
 
     def swap_signal_state(self):
-        for i, l in enumerate(self.signalState):
-            if l == GREEN:
-                self.signalState[i] = RED
+        for l in self.signalState:
+            if self.signalState[l] == GREEN:
+                self.signalState[l] = RED
             else:
-                self.signalState[i] = GREEN
+                self.signalState[l] = GREEN
 
     def display(self, surface):
         """surface is a pygame.Surface object to blit the Intersection onto"""
