@@ -3,11 +3,13 @@ import numpy as np
 from CONSTANTS import *
 import pygame
 from AI_v0_2 import Network as BACKGROUND_AI
+from box import Box
+from intersection import Intersection
 
 NETWORK_SHAPE = [42, 14, 7, 3]  # TODO Train this size until it's the best it can do, then add a layer at a time.
 
 
-class Car(BACKGROUND_AI):
+class Car(Box, BACKGROUND_AI):
     def __init__(self, position: tuple, direction=S, file=None):
         BACKGROUND_AI.__init__(self, networkShape=NETWORK_SHAPE, file=file)
         self.nextMove = {}  # {"direction", "pos", "velocity"}
@@ -30,7 +32,7 @@ class Car(BACKGROUND_AI):
             keys_in = {}
 
         # result = [Turn, LaneChange, Acceleration]
-        #result = self.feedForward([1, 0, 0, 0, 0, 0, 0])  # TODO get input vector from data from Map
+        # result = self.feedForward([1, 0, 0, 0, 0, 0, 0])  # TODO get input vector from data from Map
         result = self.feedForward(self.get_sensor_data(city_map))
         # print(result)
 
@@ -110,7 +112,7 @@ class Car(BACKGROUND_AI):
         """
         data = []
         for sensor in self.sensors:
-            data += sensor.sense(city_map)
+            data += sensor.sense(city_map, self.direction)
         return data;
 
     def collision_check(self, otherCar):
@@ -127,52 +129,113 @@ class Car(BACKGROUND_AI):
             s.display(surface, self.pos, self.direction)
 
 
-
-
-
 class Sensor:
-    def __init__(self, startLine, endLine):
-        self.start = startLine
-        self.end = endLine
+    def __init__(self, start_line, end_line):
+        self.start = start_line
+        self.end = end_line
+        self.state = [0, 0, 0, 0, 0, 0, 0]
 
-    def display(self, surface, carPos, carDir):
+    def display(self, surface, car_pos, car_dir):
+        # Change the color based on what it is sensing
+        color = BLUE
+        if self.state[0] != 0:
+            color = GREEN
+        elif self.state[1] != 0:
+            color = WHITE
+        elif self.state[2] != 0:
+            color = YELLOW
+        elif self.state[3] != 0:
+            color = PINK
+        elif self.state[4] != 0:
+            color = WHITE
+        elif self.state[5] != 0:
+            color = RED
+        elif self.state[6] != 0:
+            color = BLACK
+
         northPos = (
-            (self.start[0] + carPos[0], self.start[1] + carPos[1]), (self.end[0] + carPos[0], self.end[1] + carPos[1]))
-        rotatedPos = (rotateCoordinate(carPos, northPos[0], carDir), rotateCoordinate(carPos, northPos[1], carDir))
-        pygame.draw.line(surface, RED, rotatedPos[0], rotatedPos[1])
+            (self.start[0] + car_pos[0], self.start[1] + car_pos[1]), (self.end[0] + car_pos[0], self.end[1] + car_pos[1]))
+        rotatedPos = (rotateCoordinate(car_pos, northPos[0], car_dir), rotateCoordinate(car_pos, northPos[1], car_dir))
+        pygame.draw.line(surface, color, rotatedPos[0], rotatedPos[1])
 
-    def sense(self, city_map):
+    def sense(self, city_map, car_direction):
         """@:return An array[7] for each possible object to sense (Green light, Dotted line, Yellow Light, Stop Sign,
                 Solid Line, Red Light, Car)
         """
         greenLight, yellowLight, redLight, stop = self.get_lights(city_map.intersections)
         dotted, solid = self.get_lines(city_map.roads)
         cars = self.get_cars(city_map.cars)
-        return [greenLight, dotted, yellowLight, stop, solid, redLight, cars]
+        self.state = [greenLight, dotted, yellowLight, stop, solid, redLight, cars]
+        return self.state
 
-    def get_lights(self, intersections):
+    def get_lights(self, intersections, car_direction):
         # TODO
         greenLight = 0
         yellowLight = 0
+        redLight = 0
         stop = 0
 
-        # for inter in self.find_touching_intersections(intersections):
-        #     if(inter.signal_Type == "stops"):
-        #         stop = self.distance()
+        for index, distance in self.find_touching_boxes(intersections):
+            if intersections[index].signal_Type == "stops":
+                stop = distance
+            elif intersections[index].signal_Type == "lights":
+                if intersections[index].signalState[car_direction] == GREEN:
+                    greenLight = distance
+                elif intersections[index].signalState[car_direction] == YELLOW:
+                    yellowLight = distance
+                if intersections[index].signalState[car_direction] == RED:
+                    redLight = distance
 
-        return [0,0,0]
+        return greenLight, yellowLight, redLight, stop
 
     def get_cars(self, cars):
-        # TODO
-        return 0
+        # The closest car
+        closest = 100
+        for index, distance in self.find_touching_boxes(cars):
+            if distance < closest[0]:
+                closest = distance
+        if closest == 100:
+            # There weren't any cars in the range
+            return 0
+        else:
+            return closest[0]
 
     def get_lines(self, roads):
-        # TODO
-        return [0,0]
+        dotted = 0
+        solid = 0
 
-    def find_touching_intersections(self, intersections):
-        # TODO
-        return intersections;
+        # TODO Need to adapt the Box.line_intercept to be able to check the intersection of the lines on the road
+        # for road in roads:
+        #     for line in road.lines:
+        #         intersect_point =  road.line_intercept((line["start"], line["end"]), (self.start, self.end))
+        #         if intersect_point:
+        #         if line["type"] == "DOTTED":
+        #             dotted = self.distance(intersect_point, self.start)
+        #         else:
+        #             solid = self.distance(intersect_point, self.start)
+
+        return dotted, solid
+
+    def find_touching_boxes(self, boxes: list[Box]):
+        result = []  # a list of tuples (intersection_index, distance_to_the_intersection)
+        for i, intersection in enumerate(boxes):
+            intersect_point = intersection.line_intercept(self.start, self.end)
+            if intersect_point:
+                d = self.distance(intersect_point, self.start)
+                result.append((i, d))
+
+        return result
+
+    @staticmethod
+    def distance(p1, p2):
+        """
+        :param p1: first point
+        :param p2: second point
+        :return: the distance between these 2 points
+        """
+        x1, y1 = p1
+        x2, y2 = p2
+        return np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 
 def rotateCoordinate(centerOfRotation, coordinate, direction):
