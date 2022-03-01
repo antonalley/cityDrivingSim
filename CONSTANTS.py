@@ -23,6 +23,11 @@ S = np.array([0, 1])  # Turn right is swap * -1; turn left is swap
 W = np.array([-1, 0])  # Turn right is swap, turn left is swap * -1
 E = np.array([1, 0])  # Turn right is swap, turn left is swap * -1
 
+NORTH = (0,-1)
+SOUTH = (0,1)
+WEST = (-1,0)
+EAST = (1, 0)
+
 # Roads:
 LANEWIDTH = 16
 LINEWIDTH = 1

@@ -156,13 +156,13 @@ class Sensor:
         northPos = (
             (self.start[0] + car_pos[0], self.start[1] + car_pos[1]), (self.end[0] + car_pos[0], self.end[1] + car_pos[1]))
         rotatedPos = (rotateCoordinate(car_pos, northPos[0], car_dir), rotateCoordinate(car_pos, northPos[1], car_dir))
-        pygame.draw.line(surface, color, rotatedPos[0], rotatedPos[1])
+        pygame.draw.line(surface, color, rotatedPos[0], rotatedPos[1], LINEWIDTH)
 
     def sense(self, city_map, car_direction):
         """@:return An array[7] for each possible object to sense (Green light, Dotted line, Yellow Light, Stop Sign,
                 Solid Line, Red Light, Car)
         """
-        greenLight, yellowLight, redLight, stop = self.get_lights(city_map.intersections)
+        greenLight, yellowLight, redLight, stop = self.get_lights(city_map.intersections, car_direction)
         dotted, solid = self.get_lines(city_map.roads)
         cars = self.get_cars(city_map.cars)
         self.state = [greenLight, dotted, yellowLight, stop, solid, redLight, cars]
@@ -176,14 +176,14 @@ class Sensor:
         stop = 0
 
         for index, distance in self.find_touching_boxes(intersections):
-            if intersections[index].signal_Type == "stops":
+            if intersections[index].signalType == "stops":
                 stop = distance
-            elif intersections[index].signal_Type == "lights":
-                if intersections[index].signalState[car_direction] == GREEN:
+            elif intersections[index].signalType == "lights":
+                if intersections[index].signalState[tuple(car_direction)] == GREEN:
                     greenLight = distance
-                elif intersections[index].signalState[car_direction] == YELLOW:
+                elif intersections[index].signalState[tuple(car_direction)] == YELLOW:
                     yellowLight = distance
-                if intersections[index].signalState[car_direction] == RED:
+                if intersections[index].signalState[tuple(car_direction)] == RED:
                     redLight = distance
 
         return greenLight, yellowLight, redLight, stop

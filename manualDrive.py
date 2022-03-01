@@ -1,7 +1,8 @@
 """
 Run this file to drive one car through the streets
-Use Arrow keys to direct, as of 2/26/22 the arrow keys aren't press once turn, it is turn as you press, so you have to press quickly
+Use Arrow keys to direct
 """
+
 # TODO: and maybe to collect data and to train the car
 
 

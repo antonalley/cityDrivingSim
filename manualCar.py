@@ -4,6 +4,7 @@ from CONSTANTS import *
 
 class manual(car.Car):
     def next_move(self, city_map, keys_in=None):
+        self.get_sensor_data(city_map) # just to update the sensors and their color
         self.nextMove["pos"] = self.pos
         self.nextMove["velocity"] = self.velocity
         self.nextMove["direction"] = self.direction
