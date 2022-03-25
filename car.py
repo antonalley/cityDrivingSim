@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 
 from CONSTANTS import *
@@ -32,9 +34,10 @@ class Car(Box, BACKGROUND_AI):
             keys_in = {}
 
         # result = [Turn, LaneChange, Acceleration]
-        # result = self.feedForward([1, 0, 0, 0, 0, 0, 0])  # TODO get input vector from data from Map
-        result = self.feedForward(self.get_sensor_data(city_map))
+        iresult = self.feedForward(self.get_sensor_data(city_map))
+        result = [normalizeResult(r) for r in iresult]
         # print(result)
+
 
         # These are to make sure that there aren't any errors with not having a value
         self.nextMove["direction"] = self.direction
@@ -110,10 +113,12 @@ class Car(Box, BACKGROUND_AI):
             -  It gives the distance to each of those options ( or 0 if not touching )
             - So a total of 6 sensors x 7 verticies = 42 input size
         """
+        clock = time.time()
         data = []
         for sensor in self.sensors:
-            data += sensor.sense(city_map, self.direction)
-        return data;
+            data += sensor.sense(city_map, self.pos, self.direction)
+        print(f"It took {time.time() - clock} seconds to calculate results")
+        return data
 
     def collision_check(self, otherCar):
         pass
@@ -131,9 +136,21 @@ class Car(Box, BACKGROUND_AI):
 
 class Sensor:
     def __init__(self, start_line, end_line):
-        self.start = start_line
-        self.end = end_line
+        self.relative_start = start_line
+        self.relative_end = end_line
         self.state = [0, 0, 0, 0, 0, 0, 0]
+
+        self.last_realized_start = start_line
+        self.last_realized_end = end_line
+
+    def update_realized_pos(self, car_pos, car_dir):
+        # Applies the relative position of this sensor to the car's location and direction
+        northPos = (
+            (self.relative_start[0] + car_pos[0], self.relative_start[1] + car_pos[1]),
+            (self.relative_end[0] + car_pos[0], self.relative_end[1] + car_pos[1]))
+
+        self.last_realized_start = rotateCoordinate(car_pos, northPos[0], car_dir)
+        self.last_realized_end = rotateCoordinate(car_pos, northPos[1], car_dir)
 
     def display(self, surface, car_pos, car_dir):
         # Change the color based on what it is sensing
@@ -153,16 +170,16 @@ class Sensor:
         elif self.state[6] != 0:
             color = BLACK
 
-        northPos = (
-            (self.start[0] + car_pos[0], self.start[1] + car_pos[1]), (self.end[0] + car_pos[0], self.end[1] + car_pos[1]))
-        rotatedPos = (rotateCoordinate(car_pos, northPos[0], car_dir), rotateCoordinate(car_pos, northPos[1], car_dir))
-        pygame.draw.line(surface, color, rotatedPos[0], rotatedPos[1], LINEWIDTH)
+        self.update_realized_pos(car_pos, car_dir)
+        pygame.draw.line(surface, color, self.last_realized_start, self.last_realized_end, LINEWIDTH)
 
-    def sense(self, city_map, car_direction):
+    def sense(self, city_map, car_pos, car_dir):
         """@:return An array[7] for each possible object to sense (Green light, Dotted line, Yellow Light, Stop Sign,
                 Solid Line, Red Light, Car)
         """
-        greenLight, yellowLight, redLight, stop = self.get_lights(city_map.intersections, car_direction)
+        self.update_realized_pos(car_pos, car_dir)
+
+        greenLight, yellowLight, redLight, stop = self.get_lights(city_map.intersections, car_dir)
         dotted, solid = self.get_lines(city_map.roads)
         cars = self.get_cars(city_map.cars)
         self.state = [greenLight, dotted, yellowLight, stop, solid, redLight, cars]
@@ -192,13 +209,13 @@ class Sensor:
         # The closest car
         closest = 100
         for index, distance in self.find_touching_boxes(cars):
-            if distance < closest[0]:
+            if distance < closest:
                 closest = distance
         if closest == 100:
             # There weren't any cars in the range
             return 0
         else:
-            return closest[0]
+            return closest
 
     def get_lines(self, roads):
         dotted = 0
@@ -219,9 +236,9 @@ class Sensor:
     def find_touching_boxes(self, boxes: list[Box]):
         result = []  # a list of tuples (intersection_index, distance_to_the_intersection)
         for i, intersection in enumerate(boxes):
-            intersect_point = intersection.line_intercept(self.start, self.end)
+            intersect_point = intersection.line_intercept(self.last_realized_start, self.last_realized_end)
             if intersect_point:
-                d = self.distance(intersect_point, self.start)
+                d = self.distance(intersect_point, self.last_realized_start)
                 result.append((i, d))
 
         return result
@@ -235,7 +252,7 @@ class Sensor:
         """
         x1, y1 = p1
         x2, y2 = p2
-        return np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        return float(np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2))
 
 
 def rotateCoordinate(centerOfRotation, coordinate, direction):

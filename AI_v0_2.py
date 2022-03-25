@@ -84,7 +84,7 @@ class Network:
         self.weights = weights
         self.biases = biases
                          
-    def feedForward(self, inputVector):
+    def feedForward(self, inputVector) -> list:
         """
 
         :rtype: object
